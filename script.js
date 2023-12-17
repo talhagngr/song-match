@@ -157,9 +157,10 @@ function exchangeAuthCodeForToken(authCode) {
 
 window.onload = getAuthorizationCode;
 
-async function searchYouTube(trackName, accessToken) {
-    // Replace this URL with the appropriate YouTube API endpoint
-    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(trackName)}&type=video&key=AIzaSyC6P8DieyB9R6dGogTwtky3vS1o0kAm6eU`;
+// Function to search a track on YouTube
+async function searchYouTube(trackName, artistName, youtubeApiKey) {
+    const query = encodeURIComponent(`${trackName} ${artistName}`);
+    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${query}&type=video&key=AIzaSyC6P8DieyB9R6dGogTwtky3vS1o0kAm6eU`;
 
     try {
         const response = await fetch(searchUrl);
@@ -167,12 +168,9 @@ async function searchYouTube(trackName, accessToken) {
             throw new Error(`YouTube Search HTTP error! Status: ${response.status}`);
         }
         const data = await response.json();
-        console.log('YouTube search results:', data);
-        // Assuming the first result is the desired one
-        return data.items[0].id.videoId;
+        return data.items[0].id.videoId; // Assuming the first result is the desired one
     } catch (error) {
         console.error('Error searching YouTube:', error);
-        displayError('Error searching YouTube');
     }
 }
 
@@ -192,7 +190,9 @@ async function createYouTubePlaylist(title, description, accessToken) {
                 'Authorization': 'Bearer ' + accessToken,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(playlistDetails)
+            body: JSON.stringify({
+                snippet: { title, description },
+                status: { privacyStatus: 'private' }
         });
 
         if (!response.ok) {
@@ -229,7 +229,14 @@ async function addTrackToYouTubePlaylist(playlistId, trackId, accessToken) {
                 'Authorization': 'Bearer ' + accessToken,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(trackDetails)
+            body: JSON.stringify({
+                snippet: {
+                    playlistId: playlistId,
+                    resourceId: {
+                        kind: 'youtube#video',
+                        videoId: trackVideoId
+                    }
+                }
         });
 
         if (!response.ok) {
