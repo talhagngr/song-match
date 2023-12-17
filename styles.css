@@ -23,15 +23,31 @@ header {
     text-align: center; /* Center the text within the div */
 }
 
-.playlist-container {
-    margin: 20px;
-    /* Add more styling as per your design preference */
+#playlist-container {
+    width: 300px;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
 }
+
+#playlists {
+    margin-bottom: 20px;
+}
+
 .playlist-item {
-    cursor: pointer;
-    margin: 10px 0;
-    /* Add more styling for playlist items */
+    margin-bottom: 10px;
 }
+
+button {
+    padding: 10px 15px;
+    background-color: blue;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
 
 
 @media (max-width: 768px)
