@@ -156,3 +156,99 @@ function exchangeAuthCodeForToken(authCode) {
 }
 
 window.onload = getAuthorizationCode;
+
+async function searchYouTube(trackName, accessToken) {
+    // Replace this URL with the appropriate YouTube API endpoint
+    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(trackName)}&type=video&key=AIzaSyC6P8DieyB9R6dGogTwtky3vS1o0kAm6eU`;
+
+    try {
+        const response = await fetch(searchUrl);
+        if (!response.ok) {
+            throw new Error(`YouTube Search HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('YouTube search results:', data);
+        // Assuming the first result is the desired one
+        return data.items[0].id.videoId;
+    } catch (error) {
+        console.error('Error searching YouTube:', error);
+        displayError('Error searching YouTube');
+    }
+}
+
+// Function to create a playlist on YouTube
+async function createYouTubePlaylist(title, description, accessToken) {
+    const createPlaylistUrl = `https://www.googleapis.com/youtube/v3/playlists?part=snippet,status`;
+
+    const playlistDetails = {
+        snippet: { title, description },
+        status: { privacyStatus: 'private' }
+    };
+
+    try {
+        const response = await fetch(createPlaylistUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + accessToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(playlistDetails)
+        });
+
+        if (!response.ok) {
+            throw new Error(`YouTube Playlist Creation HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Created YouTube Playlist:', data);
+        return data.id; // Return the created playlist ID
+    } catch (error) {
+        console.error('Error creating YouTube playlist:', error);
+        displayError('Error creating YouTube playlist');
+    }
+}
+
+// Function to add a track to a YouTube playlist
+async function addTrackToYouTubePlaylist(playlistId, trackId, accessToken) {
+    const addToPlaylistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet`;
+
+    const trackDetails = {
+        snippet: {
+            playlistId,
+            resourceId: {
+                kind: 'youtube#video',
+                videoId: trackId
+            }
+        }
+    };
+
+    try {
+        const response = await fetch(addToPlaylistUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + accessToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(trackDetails)
+        });
+
+        if (!response.ok) {
+            throw new Error(`YouTube Add Track HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Added track to YouTube Playlist:', data);
+    } catch (error) {
+        console.error('Error adding track to YouTube playlist:', error);
+        displayError('Error adding track to YouTube playlist');
+    }
+}
+
+// Example usage (you need to implement the logic to call these functions appropriately)
+// searchYouTube('Track Name', 'YouTubeAccessToken').then(trackId => {
+//     createYouTubePlaylist('My Playlist', 'Description', 'YouTubeAccessToken').then(playlistId => {
+//         addTrackToYouTubePlaylist(playlistId, trackId, 'YouTubeAccessToken');
+//     });
+// });
+
+window.onload = getAuthorizationCode;
