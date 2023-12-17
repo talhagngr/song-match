@@ -1,0 +1,37 @@
+body, html {
+    height: 100%;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #DBF9FC; /* Choose the color you want for the body */
+    line-height: 1.6;
+    padding: 0;
+    color: #333; /* Text color */
+}
+
+header {
+    text-align: center;
+    padding: 20px 0; /* Padding on top and bottom */
+    margin-bottom: 30px; /* Space between header and content */
+    
+}
+
+.header-text {
+    background-color: #fddde6; /* Mellow pink background */
+    display: inline-block; /* Allows the div to fit the content size */
+    padding: 10px 20px; /* Adjust the padding as needed */
+    margin: 0 auto; /* Center the div */
+    text-align: center; /* Center the text within the div */
+}
+
+.playlist-container {
+    margin: 20px;
+    /* Add more styling as per your design preference */
+}
+.playlist-item {
+    cursor: pointer;
+    margin: 10px 0;
+    /* Add more styling for playlist items */
+}
+
+
+@media (max-width: 768px)
