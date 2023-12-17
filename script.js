@@ -21,10 +21,32 @@ async function fetchUserPlaylists(accessToken) {
 
         const data = await response.json();
         console.log('Playlists fetched successfully', data);
+        for (const playlist of data.items) {
+            playlist.tracks = await fetchPlaylistTracks(accessToken, playlist.id);
+        }
         displayPlaylists(data.items);
     } catch (error) {
         console.error('Error fetching playlists:', error);
         displayError('Error fetching playlists');
+    }
+}
+
+async function fetchPlaylistTracks(accessToken, playlistId) {
+    try {
+        const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+            headers: { 'Authorization': 'Bearer ' + accessToken }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const tracksData = await response.json();
+        console.log('Tracks fetched successfully for playlist ID:', playlistId, tracksData);
+        return tracksData.items; // Return the tracks
+    } catch (error) {
+        console.error(`Error fetching tracks for playlist ${playlistId}:`, error);
+        displayError(`Error fetching tracks for playlist ${playlistId}`);
     }
 }
 
@@ -52,6 +74,21 @@ function displayPlaylists(playlists) {
 
         playlistContainer.appendChild(checkbox);
         playlistContainer.appendChild(label);
+        
+        // Display tracks for each playlist
+        if (playlist.tracks) {
+            const tracksContainer = document.createElement('div');
+            tracksContainer.className = 'tracks-container';
+
+            playlist.tracks.forEach(track => {
+                const trackElement = document.createElement('p');
+                trackElement.textContent = track.track.name; // Assuming 'track' has a 'name' property
+                tracksContainer.appendChild(trackElement);
+            });
+
+            playlistContainer.appendChild(tracksContainer);
+        }
+
         container.appendChild(playlistContainer);
     });
 }
