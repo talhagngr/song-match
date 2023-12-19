@@ -1,163 +1,129 @@
 document.getElementById('spotifyLoginButton').addEventListener('click', function() {
-    const clientId = '6aaaeb6d3a884d5d94bf46bcdab165e1'; // Replace with your actual client ID
-    const redirectUri = encodeURIComponent('https://talhagngr.github.io/song-match/'); // Make sure this matches the redirect URI in your Spotify app settings
-    const scopes = 'user-library-read playlist-read-private playlist-read-collaborative'; // Required Spotify scopes
-    const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=code&redirect_uri=${redirectUri}&scope=${encodeURIComponent(scopes)}`;
+    var clientId = '6aaaeb6d3a884d5d94bf46bcdab165e1'; // Your client ID
+    var redirectUri = encodeURIComponent('https://talhagngr.github.io/song-match/'); // URL encode the redirect URI
+    var scopes = 'user-library-read playlist-read-private playlist-read-collaborative'; // Scopes
+    var authUrl = 'https://accounts.spotify.com/authorize' +
+                  '?client_id=' + clientId +
+                  '&response_type=code' +
+                  '&redirect_uri=' + redirectUri +
+                  '&scope=' + encodeURIComponent(scopes); // URL encode the scopes
 
-    window.location.href = authUrl; // Redirects to Spotify's authorization page
+    window.location.href = authUrl;
 });
 
 let selectedPlaylists = [];
 
-async function fetchUserPlaylists(accessToken) {
-    try {
-        const response = await fetch('https://api.spotify.com/v1/me/playlists', {
-            headers: { 'Authorization': 'Bearer ' + accessToken }
-        });
-
+function fetchUserPlaylists(accessToken) {
+    return fetch('https://api.spotify.com/v1/me/playlists', {
+        headers: { 'Authorization': 'Bearer ' + accessToken }
+    })
+    .then(response => {
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error('Network response was not ok');
         }
-
-        const data = await response.json();
+        return response.json();
+    })
+    .then(data => {
         console.log('Playlists fetched successfully', data);
-        for (const playlist of data.items) {
-            playlist.tracks = await fetchPlaylistTracks(accessToken, playlist.id); // Fetch tracks for each playlist
-        }
-        displayPlaylists(data.items);
-    } catch (error) {
-        console.error('Error fetching playlists:', error);
-        displayError('Error fetching playlists');
-    }
-}
-
-async function fetchPlaylistTracks(accessToken, playlistId) {
-    try {
-        const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
-            headers: { 'Authorization': 'Bearer ' + accessToken }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const tracksData = await response.json();
-        console.log('Tracks fetched successfully for playlist ID:', playlistId, tracksData);
-        return tracksData.items; // Return the tracks
-    } catch (error) {
-        console.error(`Error fetching tracks for playlist ${playlistId}:`, error);
-        displayError(`Error fetching tracks for playlist ${playlistId}`);
-    }
+        displayPlaylists(data.items); // Function to display playlists
+    })
+    .catch(error => console.error('Error fetching playlists:', error));
 }
 
 function displayPlaylists(playlists) {
     const container = document.getElementById('playlistContainer');
-    if (!container) {
-        console.error('Playlist container not found');
-        return;
-    }
     container.innerHTML = ''; // Clear existing content
 
     playlists.forEach(playlist => {
+        // Create a container div for each playlist item
         const playlistContainer = document.createElement('div');
         playlistContainer.className = 'playlist-item';
 
+        // Create a checkbox for the playlist
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        checkbox.value = playlist.id;
+        checkbox.value = playlist.id; // Use a unique identifier for the playlist
         checkbox.addEventListener('change', () => {
+            // Handle checkbox change event to track selected playlists
             if (checkbox.checked) {
-                selectPlaylist(playlist.id);
+                selectPlaylist(playlist.id); // Pass the playlist ID to the selectPlaylist function
             } else {
-                deselectPlaylist(playlist.id);
+                deselectPlaylist(playlist.id); // Pass the playlist ID to the deselectPlaylist function
             }
         });
 
+        // Create a label for the checkbox with the playlist name
         const label = document.createElement('label');
         label.textContent = playlist.name;
 
+        // Append the checkbox and label to the playlist container
         playlistContainer.appendChild(checkbox);
         playlistContainer.appendChild(label);
-        
-        if (playlist.tracks && playlist.tracks.length > 0) {
-            const tracksContainer = document.createElement('div');
-            tracksContainer.className = 'tracks-container';
 
-            playlist.tracks.forEach(track => {
-                const trackElement = document.createElement('p');
-                trackElement.textContent = track.track.name; // Display track name
-                tracksContainer.appendChild(trackElement);
-            });
-
-            playlistContainer.appendChild(tracksContainer);
-        }
-
+        // Append the playlist container to the main container
         container.appendChild(playlistContainer);
     });
 }
 
 function selectPlaylist(playlistId) {
-    if (!selectedPlaylists.includes(playlistId)) {
-        selectedPlaylists.push(playlistId);
-    }
+    // Add the playlist ID to the selectedPlaylists array
+    selectedPlaylists.push(playlistId);
     console.log('Selected Playlists:', selectedPlaylists);
+    // Update the UI or add more functionality here
 }
 
 function deselectPlaylist(playlistId) {
+    // Remove the playlist ID from the selectedPlaylists array
     const index = selectedPlaylists.indexOf(playlistId);
     if (index !== -1) {
         selectedPlaylists.splice(index, 1);
     }
     console.log('Selected Playlists:', selectedPlaylists);
+    // Update the UI or add more functionality here
 }
 
-function displayError(message) {
-    console.error(message); // Implement UI feedback for errors
-}
-
-async function getAuthorizationCode() {
+function getAuthorizationCode() {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
     const authCode = urlParams.get('code');
     if (authCode) {
         console.log("Authorization Code:", authCode);
-        await exchangeAuthCodeForToken(authCode); // Await the token exchange
+        exchangeAuthCodeForToken(authCode);
     } else {
         console.log("No authorization code found in URL.");
     }
 }
 
-async function exchangeAuthCodeForToken(authCode) {
-    const clientId = '6aaaeb6d3a884d5d94bf46bcdab165e1'; // Replace with your actual client ID
-    const clientSecret = 'bee9e6ab487d4a3aa70fc310e61fc950'; // Replace with your actual client secret
+function exchangeAuthCodeForToken(authCode) {
+    const clientId = '6aaaeb6d3a884d5d94bf46bcdab165e1';
+    const clientSecret = 'bee9e6ab487d4a3aa70fc310e61fc950'; // Exposed client secret for personal use
 
     const body = new URLSearchParams();
     body.append('grant_type', 'authorization_code');
     body.append('code', authCode);
-    body.append('redirect_uri', encodeURIComponent('https://talhagngr.github.io/song-match/'));
+    body.append('redirect_uri', 'https://talhagngr.github.io/song-match/');
 
-    const authString = btoa(clientId + ':' + clientSecret);
+    const authString = btoa(clientId + ':' + clientSecret); // Encode credentials in Base64
 
-    try {
-        const response = await fetch('https://accounts.spotify.com/api/token', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Authorization': 'Basic ' + authString
-            },
-            body: body
-        });
-
+    fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': 'Basic ' + authString // Use Base64-encoded credentials
+        },
+        body: body
+    })
+    .then(response => {
         if (!response.ok) {
             throw new Error('Network response was not ok during token exchange');
         }
-
-        const data = await response.json();
+        return response.json();
+    })
+    .then(data => {
         console.log('Access Token:', data.access_token);
-        fetchUserPlaylists(data.access_token); // Fetch playlists using the access token
-    } catch (error) {
-        console.error('Error during token exchange:', error);
-    }
+        return fetchUserPlaylists(data.access_token);
+    })
+    .catch(error => console.error('Error during token exchange:', error));
 }
 
-window.onload = getAuthorizationCode; // Ensure this function is called when the page loads
+window.onload = getAuthorizationCode;
