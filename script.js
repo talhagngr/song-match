@@ -124,7 +124,44 @@ function exchangeAuthCodeForToken(authCode) {
         return fetchUserPlaylists(data.access_token);
     })
     .catch(error => console.error('Error during token exchange:', error));
+} 
+
+function fetchPlaylistTracks(playlistId, accessToken) {
+    return fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+        headers: { 'Authorization': 'Bearer ' + accessToken }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error fetching playlist tracks');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Tracks fetched for playlist:', playlistId, data);
+        // Process these tracks and search them on YouTube
+    })
+    .catch(error => console.error('Error fetching playlist tracks:', error));
 }
+
+
+document.getElementById('transferButton').addEventListener('click', async function() {
+    for (let playlistId of selectedPlaylists) {
+        try {
+            const playlistTracks = await fetchPlaylistTracks(playlistId, accessToken);
+            const trackNames = playlistTracks.items.map(item => item.track.name); // Modify as needed to include artist names
+            const videoIds = await searchYouTubeTracks(trackNames);
+
+            const youtubePlaylistId = await createYouTubePlaylist('YouTube Playlist Title', 'Description', youtubeAccessToken);
+
+            for (let videoId of videoIds) {
+                await addTrackToYouTubePlaylist(youtubePlaylistId, videoId, youtubeAccessToken);
+            }
+        } catch (error) {
+            console.error('Error in transferring playlist:', error);
+        }
+    }
+});
+
 
 window.onload = getAuthorizationCode;
 
@@ -134,21 +171,30 @@ window.onload = getAuthorizationCode;
 const youtubeApiKey = 'YOUR_YOUTUBE_API_KEY'; 
 
 // Function to search a track on YouTube
-async function searchYouTube(trackName) {
-    const query = encodeURIComponent(trackName);
-    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${query}&type=video&key=${youtubeApiKey}`;
+async function searchYouTubeTracks(tracks) {
+    let videoIds = [];
+    for (let track of tracks) {
+        const query = encodeURIComponent(track);
+        const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${query}&type=video&key=${youtubeApiKey}&maxResults=1`;
 
-    try {
-        const response = await fetch(searchUrl);
-        if (!response.ok) {
-            throw new Error(`YouTube Search HTTP error! Status: ${response.status}`);
+        try {
+            const response = await fetch(searchUrl);
+            if (!response.ok) {
+                throw new Error(`YouTube Search HTTP error! Status: ${response.status}`);
+            }
+            const data = await response.json();
+            if (data.items.length > 0) {
+                videoIds.push(data.items[0].id.videoId); // Assuming the first result is the desired one
+            } else {
+                console.log(`No results found for track: ${track}`);
+            }
+        } catch (error) {
+            console.error('Error searching YouTube:', error);
         }
-        const data = await response.json();
-        return data.items[0].id.videoId; // Assuming the first result is the desired one
-    } catch (error) {
-        console.error('Error searching YouTube:', error);
     }
+    return videoIds;
 }
+
 
 // Function to create a playlist on YouTube
 async function createYouTubePlaylist(title, description, accessToken) {
