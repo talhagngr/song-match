@@ -151,8 +151,8 @@ function fetchPlaylistTracks(playlistId, accessToken) {
 
 
 document.getElementById('transferButton').addEventListener('click', async function() {
-    var clientId = 'YOUR_GOOGLE_CLIENT_ID';
-    var redirectUri = encodeURIComponent('YOUR_REDIRECT_URI');
+    var clientId = '448492703688-2rot5fto7knaqkghe1hp4gn76s504ovo.apps.googleusercontent.com';
+    var redirectUri = encodeURIComponent('https://talhagngr.github.io/song-match/');
     var scopes = encodeURIComponent('https://www.googleapis.com/auth/youtube');
     var authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scopes}&access_type=offline&include_granted_scopes=true`;
 // Assuming that the OAuth process will set the 'youtubeAccessToken' upon success
