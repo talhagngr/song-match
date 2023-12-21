@@ -82,7 +82,7 @@ function deselectPlaylist(playlistId) {
     // Update the UI or add more functionality here
 }
 
-function getAuthorizationCode() {
+function getSpotifyAuthorizationCode() {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
     const spotifyAuthCode = urlParams.get('code');
@@ -186,27 +186,34 @@ function fetchPlaylistTracks(playlistId, accessToken) {
 
 
 document.getElementById('transferButton').addEventListener('click', async function() {
-    var clientId = '448492703688-2rot5fto7knaqkghe1hp4gn76s504ovo.apps.googleusercontent.com';
-    var redirectUri = encodeURIComponent('https://talhagngr.github.io/song-match/');
-    var scopes = encodeURIComponent('https://www.googleapis.com/auth/youtube');
-    var authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scopes}&access_type=offline&include_granted_scopes=true`;
+    var youtubeClientId = '448492703688-2rot5fto7knaqkghe1hp4gn76s504ovo.apps.googleusercontent.com';
+    var youtubeRedirectUri = encodeURIComponent('https://talhagngr.github.io/song-match/');
+    var youtubeScopes = encodeURIComponent('https://www.googleapis.com/auth/youtube');
+    var youtubeAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scopes}&access_type=offline&include_granted_scopes=true`;
 // Assuming that the OAuth process will set the 'youtubeAccessToken' upon success
-    window.location.href = authUrl;
+    window.location.href = youtubeAuthUrl;
+});
 
-    // Wait for YouTube authentication to complete
-    // (This part needs to be handled based on how your authentication flow is set up)
-    // ...
+function handleYouTubeAuthResponse() {
+    // Extract the authorization code from the URL
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const authCode = urlParams.get('code');
 
-    // Step 2: After successful YouTube Login, start transferring playlists
-    if (youtubeAccessToken) {
+    if (authCode) {
+        // Exchange auth code for access token
+        exchangeAuthCodeForToken(authCode, 'youtube');
+    }
+}
+
+async function transferPlaylists(youtubeAccessToken) {
     for (let playlistId of selectedPlaylists) {
         try {
-            const playlistTracks = await fetchPlaylistTracks(playlistId, accessToken);
-            const trackNames = playlistTracks.items.map(item => item.track.name); // Modify as needed to include artist names
-            const videoIds = await searchYouTubeTracks(trackNames);
+            const playlistTracks = await fetchPlaylistTracks(playlistId, spotifyAccessToken);
+            const trackNames = playlistTracks.items.map(item => item.track.name);
+            const videoIds = await searchYouTubeTracks(trackNames, youtubeApiKey);
 
             const youtubePlaylistId = await createYouTubePlaylist('YouTube Playlist Title', 'Description', youtubeAccessToken);
-
             for (let videoId of videoIds) {
                 await addTrackToYouTubePlaylist(youtubePlaylistId, videoId, youtubeAccessToken);
             }
@@ -214,18 +221,15 @@ document.getElementById('transferButton').addEventListener('click', async functi
             console.error('Error in transferring playlist:', error);
         }
     }
-         } else {
-        console.log('YouTube login is required.');
-    }
-});
+}
 
 
-window.onload = getAuthorizationCode;
 
-// ... [existing Spotify code] ...
+
+
 
 // Add a YouTube API key here
-const youtubeApiKey = 'YOUR_YOUTUBE_API_KEY'; 
+const youtubeApiKey = 'AIzaSyC6P8DieyB9R6dGogTwtky3vS1o0kAm6eU'; 
 
 // Function to search a track on YouTube
 async function searchYouTubeTracks(tracks) {
@@ -318,6 +322,7 @@ async function addTrackToYouTubePlaylist(playlistId, trackVideoId, accessToken) 
         console.error('Error adding track to YouTube playlist:', error);
     }
 }
+window.onload = handleYoutubeAuthResponse;
 
 // Example usage (you need to implement the logic to call these functions appropriately)
 // searchYouTube('Track Name').then(trackId => {
