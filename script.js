@@ -100,7 +100,8 @@ function getAuthorizationCode() {
 }
 
 
-function exchangeAuthCodeForToken(authCode) {
+function exchangeAuthCodeForToken(authCode, service) {
+    if (service === 'spotify') {
     const clientId = '6aaaeb6d3a884d5d94bf46bcdab165e1';
     const clientSecret = 'bee9e6ab487d4a3aa70fc310e61fc950'; // Exposed client secret for personal use
 
@@ -131,6 +132,40 @@ function exchangeAuthCodeForToken(authCode) {
     })
     .catch(error => console.error('Error during token exchange:', error));
 } 
+} else if (service === 'youtube') {
+    const youtubeClientId = 'YOUR_YOUTUBE_CLIENT_ID';
+        const youtubeClientSecret = 'YOUR_YOUTUBE_CLIENT_SECRET'; // YouTube client secret
+
+        const body = new URLSearchParams();
+        body.append('grant_type', 'authorization_code');
+        body.append('code', authCode);
+        body.append('redirect_uri', 'YOUR_YOUTUBE_REDIRECT_URI');
+        body.append('client_id', youtubeClientId);
+        body.append('client_secret', youtubeClientSecret);
+
+        fetch('https://oauth2.googleapis.com/token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: body
+        })
+        .then(handleResponse)
+        .then(data => {
+            console.log('YouTube Access Token:', data.access_token);
+            // Handle YouTube access token (store it, use it for API requests, etc.)
+        })
+        .catch(error => console.error('Error during YouTube token exchange:', error));
+    }
+}
+
+function handleResponse(response) {
+    if (!response.ok) {
+        throw new Error('Network response was not ok during token exchange');
+    }
+    return response.json();
+}
+
 
 function fetchPlaylistTracks(playlistId, accessToken) {
     return fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
