@@ -85,14 +85,20 @@ function deselectPlaylist(playlistId) {
 function getAuthorizationCode() {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
-    const authCode = urlParams.get('code');
-    if (authCode) {
-        console.log("Authorization Code:", authCode);
-        exchangeAuthCodeForToken(authCode);
+    const spotifyAuthCode = urlParams.get('code');
+    const state = urlParams.get('state');
+
+    if (spotifyAuthCode && state === 'spotify') {
+        console.log("Spotify Authorization Code:", spotifyAuthCode);
+        exchangeAuthCodeForToken(spotifyAuthCode, 'spotify');
+    } else if (spotifyAuthCode && state === 'youtube') {
+        console.log("YouTube Authorization Code:", spotifyAuthCode);
+        exchangeAuthCodeForToken(spotifyAuthCode, 'youtube');
     } else {
         console.log("No authorization code found in URL.");
     }
 }
+
 
 function exchangeAuthCodeForToken(authCode) {
     const clientId = '6aaaeb6d3a884d5d94bf46bcdab165e1';
@@ -145,6 +151,19 @@ function fetchPlaylistTracks(playlistId, accessToken) {
 
 
 document.getElementById('transferButton').addEventListener('click', async function() {
+    var clientId = 'YOUR_GOOGLE_CLIENT_ID';
+    var redirectUri = encodeURIComponent('YOUR_REDIRECT_URI');
+    var scopes = encodeURIComponent('https://www.googleapis.com/auth/youtube');
+    var authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scopes}&access_type=offline&include_granted_scopes=true`;
+// Assuming that the OAuth process will set the 'youtubeAccessToken' upon success
+    window.location.href = authUrl;
+
+    // Wait for YouTube authentication to complete
+    // (This part needs to be handled based on how your authentication flow is set up)
+    // ...
+
+    // Step 2: After successful YouTube Login, start transferring playlists
+    if (youtubeAccessToken) {
     for (let playlistId of selectedPlaylists) {
         try {
             const playlistTracks = await fetchPlaylistTracks(playlistId, accessToken);
@@ -159,6 +178,9 @@ document.getElementById('transferButton').addEventListener('click', async functi
         } catch (error) {
             console.error('Error in transferring playlist:', error);
         }
+    }
+         } else {
+        console.log('YouTube login is required.');
     }
 });
 
