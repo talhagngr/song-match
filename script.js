@@ -322,14 +322,8 @@ async function addTrackToYouTubePlaylist(playlistId, trackVideoId, accessToken) 
         console.error('Error adding track to YouTube playlist:', error);
     }
 }
-window.onload = handleYoutubeAuthResponse;
-
-// Example usage (you need to implement the logic to call these functions appropriately)
-// searchYouTube('Track Name').then(trackId => {
-//     createYouTubePlaylist('My Playlist', 'Description', 'YouTubeAccessToken').then(playlistId => {
-//         addTrackToYouTubePlaylist(playlistId, trackId, 'YouTubeAccessToken');
-//     });
-// });
-
-// ... [rest of your existing code] ...
+window.onload = function() {
+    getSpotifyAuthorizationCode();
+    handleYoutubeAuthResponse(); // Corrected the function name
+};
 
